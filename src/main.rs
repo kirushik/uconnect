@@ -12,10 +12,18 @@ fn main() {
                     .version("0.1.0")
                     .author("Kirill Pimenov <kpimenov@suse.de>")
                     .about("Rust reimplementation of the SUSE Connect tool.")
+
                     .arg(Arg::with_name("debug")
                              .short("d")
                              .long("debug")
                              .help("Enable debugging output"))
+
+                    .arg(Arg::with_name("REGCODE")
+                             .short("r")
+                             .long("regcode")
+                             .takes_value(true)
+                             .help("Subscription registration code for the product to be registered."))
+
                     .get_matches();
 
   if matches.is_present("debug") {
