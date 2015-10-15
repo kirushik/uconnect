@@ -31,16 +31,20 @@ fn main() {
 
                     .get_matches();
 
-  if matches.is_present("debug") {
-    enable_debug();
-  };
+  enable_logging(matches.is_present("debug"));
 
   // Calling `unwrap()` should be safe, because regcode presence is validated by Clap setup
   let regcode = matches.value_of("REGCODE").unwrap();
   // TODO Properly handle hostnames without `http://` here
   let server_url = matches.value_of("URL").unwrap_or("https://scc.suse.com");
 
-  announce_system(&regcode, &server_url, &http_client).unwrap();
+  match announce_system(&regcode, &server_url, &http_client) {
+    Ok(()) => {},
+    Err(e) => {
+      error!("{}", e);
+      std::process::exit(67);
+    }
+  };
 }
 
 
@@ -49,8 +53,13 @@ fn main() {
 extern crate log;
 extern crate flexi_logger;
 
-fn enable_debug() {
-  flexi_logger::init(flexi_logger::LogConfig::new(), Some("uconnect=debug".to_string())).unwrap();
+fn enable_logging(enable_debug: bool) {
+  let log_level = if enable_debug {
+    Some("uconnect=debug".into())
+  } else {
+    Some("uconnect=warn".into())
+  };
+  flexi_logger::init(flexi_logger::LogConfig::new(), log_level).unwrap();
 }
 
 
