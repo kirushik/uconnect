@@ -10,6 +10,8 @@ use std::io::Read; // to make `read_to_string` work
 
 use scc_credentials::SystemCredentials;
 
+use std::process::Command;
+
 pub fn announce_system(regcode: &str, server_url: &str, http_client: &Client) -> Result<SystemCredentials> {
   debug!("Provided regcode {:?}", regcode);
   debug!("Calling SCC server at URL {:?}", server_url);
@@ -34,16 +36,16 @@ pub fn announce_system(regcode: &str, server_url: &str, http_client: &Client) ->
   Ok(credentials.into())
 }
 
-#[derive(RustcEncodable)]
+#[derive(RustcEncodable, Debug)]
 struct HwInfo {
-  arch: String,
-  cpus: u32,
-  sockets: u32,
+  arch: Option<String>,
+  cpus: Option<u32>,
+  sockets: Option<u32>,
   hypervisor: Option<String>,
   uuid: Option<String>
 }
 
-#[derive(RustcEncodable)]
+#[derive(RustcEncodable, Debug)]
 struct AnnouncePayload {
   hostname: String,
   hw_info: HwInfo
@@ -51,16 +53,40 @@ struct AnnouncePayload {
 
 impl AnnouncePayload {
     fn read() -> AnnouncePayload {
-        AnnouncePayload {
-            hostname: "ignis".into(),
-            hw_info: HwInfo {
-                arch: "x86_64".into(),
-                cpus: 2,
-                sockets: 2,
-                hypervisor: None,
-                uuid: Some("67a13430-48c5-4454-b9b9-46010ac0e391".into())
+        let mut arch: Option<String> = None;
+        let mut cpus: Option<u32> = None;
+        let mut sockets: Option<u32> = None;
+        let mut hypervisor: Option<String> = None;
+
+        let lscpu_data = String::from_utf8(Command::new("lscpu").output().unwrap().stdout).unwrap();
+        let lines = lscpu_data.split("\n");
+        for line in lines {
+            let mut chunks = line.trim().split_whitespace();
+            match chunks.next() {
+                Some("Architecture:") => arch = Some(chunks.next().unwrap().into()),
+                Some("CPU(s):") => cpus = Some(chunks.next().unwrap().parse().unwrap()),
+                Some("Socket(s):") => sockets = Some(chunks.next().unwrap().parse().unwrap()),
+                Some("Hypervisor") => { // Actual title is "Hypervisor vendor:"
+                    chunks.next().unwrap(); // Ignoring "vendor:" part
+                    hypervisor = Some(chunks.next().unwrap().into());
+                }
+                _ => {}
             }
         }
+
+        let result = AnnouncePayload {
+            hostname: "ignis".into(),
+            hw_info: HwInfo {
+                arch: arch,
+                cpus: cpus,
+                sockets: sockets,
+                hypervisor: hypervisor,
+                uuid: Some("67a13430-48c5-4454-b9b9-46010ac0e391".into())
+            }
+        };
+
+        debug!("Detected HwInfo: {:?}", result);
+        result
     }
 
     fn to_json(&self) -> String {
