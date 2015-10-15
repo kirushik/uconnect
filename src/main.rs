@@ -16,6 +16,7 @@ fn main() {
                     .arg(Arg::with_name("debug")
                              .short("d")
                              .long("debug")
+                             .global(true)
                              .help("Enable debugging output"))
 
                     .arg(Arg::with_name("REGCODE")
