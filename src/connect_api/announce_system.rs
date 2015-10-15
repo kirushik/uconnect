@@ -50,7 +50,7 @@ struct AnnouncePayload {
 }
 
 impl AnnouncePayload {
-    pub fn read() -> AnnouncePayload {
+    fn read() -> AnnouncePayload {
         AnnouncePayload {
             hostname: "ignis".into(),
             hw_info: HwInfo {
@@ -63,7 +63,7 @@ impl AnnouncePayload {
         }
     }
 
-    pub fn to_json(&self) -> String {
+    fn to_json(&self) -> String {
         json::encode(&self).unwrap()
     }
 }
