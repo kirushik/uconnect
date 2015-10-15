@@ -7,7 +7,13 @@ use clap::{Arg, App, AppSettings};
 extern crate log;
 extern crate flexi_logger;
 
+// HTTP client
+extern crate hyper;
+use hyper::client::Client;
+
 fn main() {
+  let http_client = Client::new();
+
   let matches = App::new("uconnect")
                     .version("0.1.0")
                     .author("Kirill Pimenov <kpimenov@suse.de>")
@@ -40,17 +46,22 @@ fn main() {
 
   // Calling `unwrap()` should be safe, because regcode presence is validated by Clap setup
   let regcode = matches.value_of("REGCODE").unwrap();
+  // TODO Properly handle hostnames without `http://` here
   let server_url = matches.value_of("URL").unwrap_or("https://scc.suse.com");
 
-  announce_system(&regcode, &server_url).unwrap();
+  announce_system(&regcode, &server_url, &http_client).unwrap();
 }
 
 fn enable_debug() {
   flexi_logger::init(flexi_logger::LogConfig::new(), Some("uconnect=debug".to_string())).unwrap();
 }
 
-fn announce_system(regcode: &str, server_url: &str) -> Result<(), String> {
+fn announce_system<'a>(regcode: &str, server_url: &str, http_client: &Client) -> hyper::error::Result<()> {
   debug!("Provided regcode {:?}", regcode);
   debug!("Calling SCC server at URL {:?}", server_url);
+
+  let request = http_client.post(server_url);
+  try!(request.send());
+
   Ok(())
 }
