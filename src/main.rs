@@ -19,6 +19,11 @@ fn main() {
                              .global(true)
                              .help("Enable debugging output"))
 
+                    .arg(Arg::with_name("URL")
+                             .long("url")
+                             .takes_value(true)
+                             .help("URL of registration server (e.g. https://scc.suse.com)."))
+
                     .arg(Arg::with_name("REGCODE")
                              .short("r")
                              .long("regcode")
@@ -35,12 +40,17 @@ fn main() {
 
   // Calling `unwrap()` should be safe, because regcode presence is validated by Clap setup
   let regcode = matches.value_of("REGCODE").unwrap();
-  debug!("Provided regcode {:?}", regcode);
+  let server_url = matches.value_of("URL").unwrap_or("https://scc.suse.com");
 
-  debug!("It works!");
-  println!("Hello, world!");
+  announce_system(&regcode, &server_url).unwrap();
 }
 
 fn enable_debug() {
   flexi_logger::init(flexi_logger::LogConfig::new(), Some("uconnect=debug".to_string())).unwrap();
+}
+
+fn announce_system(regcode: &str, server_url: &str) -> Result<(), String> {
+  debug!("Provided regcode {:?}", regcode);
+  debug!("Calling SCC server at URL {:?}", server_url);
+  Ok(())
 }
