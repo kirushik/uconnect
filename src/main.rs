@@ -53,9 +53,9 @@ fn main() {
     // TODO Properly handle hostnames without `http://` here
     let server_url = matches.value_of("URL").unwrap_or("https://scc.suse.com");
 
-    let _scc_credentials = scc_credentials::read_scc_credentials().unwrap_or_else(|_error| {
+    let _scc_credentials = scc_credentials::SystemCredentials::read().unwrap_or_else(|_error| {
         match connect_api::announce_system::announce_system(&regcode, &server_url, &http_client) {
-            Ok(credentials) => { scc_credentials::write_scc_credentials(&credentials).unwrap(); credentials },
+            Ok(credentials) => { credentials.write().unwrap(); credentials },
             Err(x) => {
                 error!("{}", x);
                 std::process::exit(67);
