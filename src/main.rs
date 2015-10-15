@@ -58,7 +58,7 @@ fn enable_debug() {
 extern crate hyper;
 use hyper::client::Client;
 use hyper::Url;
-use hyper::header::Authorization;
+use hyper::header::{Authorization, ContentType, AcceptEncoding, Encoding, qitem};
 
 fn announce_system<'a>(regcode: &str, server_url: &str, http_client: &Client) -> hyper::error::Result<()> {
   debug!("Provided regcode {:?}", regcode);
@@ -67,8 +67,12 @@ fn announce_system<'a>(regcode: &str, server_url: &str, http_client: &Client) ->
   let url = try!(Url::parse(&format!("{}/connect/subscriptions/systems", server_url)));
 
   let request = http_client.post(url)
-                           .header(Authorization(format!("Token token=\"{}\"", regcode)));
-  let _result = try!(request.send());
+                           .header(Authorization(format!("Token token=\"{}\"", regcode)))
+                           .header(ContentType::json())
+                           .header(AcceptEncoding(vec![qitem(Encoding::Gzip), qitem(Encoding::Deflate)]));
+  let result = try!(request.send());
+
+  debug!("{:?}", result);
 
   Ok(())
 }
