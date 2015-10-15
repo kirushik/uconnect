@@ -60,6 +60,7 @@ use hyper::client::Client;
 use hyper::Url;
 use hyper::header::{Accept, Authorization, ContentType, AcceptEncoding, Encoding, qitem};
 use hyper::mime::{Mime, TopLevel, SubLevel};
+use std::io::Read; // To make `read_to_string` work
 
 fn announce_system<'a>(regcode: &str, server_url: &str, http_client: &Client) -> hyper::error::Result<()> {
   debug!("Provided regcode {:?}", regcode);
@@ -74,9 +75,12 @@ fn announce_system<'a>(regcode: &str, server_url: &str, http_client: &Client) ->
                            .header(ContentType::json())
                            .header(AcceptEncoding(vec![qitem(Encoding::Gzip), qitem(Encoding::Deflate)]))
                            .body(&payload);
-  let result = try!(request.send());
+  let mut response = try!(request.send());
+  debug!("HTTP response status is {:?}", response.status);
 
-  debug!("HTTP response status is {:?}", result.status);
+  let mut response_body = String::new();
+  try!(response.read_to_string(&mut response_body));
+  write_scc_credentials(&response_body);
 
   Ok(())
 }
@@ -113,4 +117,15 @@ fn announce_system_payload() -> String {
   };
   // TODO Add a proper try! and result throwing here
   json::encode(&hw_info).unwrap()
+}
+
+#[derive(RustcDecodable, Debug)]
+struct SystemCredentials {
+  login: String,
+  password: String
+}
+
+fn write_scc_credentials(json_response: &str) {
+  let credentials: SystemCredentials = json::decode(json_response).unwrap(); // TODO Solve issue with Error inheritance and use try! here
+  debug!("{:?}", credentials);
 }
