@@ -33,6 +33,10 @@ fn main() {
     enable_debug();
   };
 
+  // Calling `unwrap()` should be safe, because regcode presence is validated by Clap setup
+  let regcode = matches.value_of("REGCODE").unwrap();
+  debug!("Provided regcode {:?}", regcode);
+
   debug!("It works!");
   println!("Hello, world!");
 }
