@@ -66,15 +66,34 @@ fn announce_system<'a>(regcode: &str, server_url: &str, http_client: &Client) ->
   debug!("Calling SCC server at URL {:?}", server_url);
 
   let url = try!(Url::parse(&format!("{}/connect/subscriptions/systems", server_url)));
+  let payload = announce_system_payload();
 
   let request = http_client.post(url)
                            .header(Authorization(format!("Token token=\"{}\"", regcode)))
                            .header(Accept(vec![qitem(Mime(TopLevel::Application, SubLevel::Ext("vnd.scc.suse.com.v4+json".into()), vec![]))]))
                            .header(ContentType::json())
-                           .header(AcceptEncoding(vec![qitem(Encoding::Gzip), qitem(Encoding::Deflate)]));
+                           .header(AcceptEncoding(vec![qitem(Encoding::Gzip), qitem(Encoding::Deflate)]))
+                           .body(&payload);
   let result = try!(request.send());
 
   debug!("HTTP response status is {:?}", result.status);
 
   Ok(())
+}
+
+// JSON support
+extern crate rustc_serialize;
+use rustc_serialize::json;
+
+#[derive(RustcEncodable)]
+struct HwInfo {
+  hostname: String
+}
+
+fn announce_system_payload() -> String {
+  let hw_info = HwInfo {
+    hostname: "ignis".into()
+  };
+  // TODO Add a proper try! and result throwing here
+  json::encode(&hw_info).unwrap()
 }
