@@ -1,6 +1,6 @@
 // Options parsing
 extern crate clap;
-use clap::{Arg, App};
+use clap::{Arg, App, AppSettings};
 
 // Logging
 #[macro_use]
@@ -24,6 +24,8 @@ fn main() {
                              .long("regcode")
                              .takes_value(true)
                              .help("Subscription registration code for the product to be registered."))
+
+                    .setting(AppSettings::ArgRequiredElseHelp)
 
                     .get_matches();
 
