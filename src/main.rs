@@ -72,7 +72,7 @@ fn announce_system<'a>(regcode: &str, server_url: &str, http_client: &Client) ->
                            .header(AcceptEncoding(vec![qitem(Encoding::Gzip), qitem(Encoding::Deflate)]));
   let result = try!(request.send());
 
-  debug!("{:?}", result);
+  debug!("HTTP response status is {:?}", result.status);
 
   Ok(())
 }
