@@ -57,13 +57,16 @@ fn enable_debug() {
 // HTTP client
 extern crate hyper;
 use hyper::client::Client;
+use hyper::Url;
 use hyper::header::Authorization;
 
 fn announce_system<'a>(regcode: &str, server_url: &str, http_client: &Client) -> hyper::error::Result<()> {
   debug!("Provided regcode {:?}", regcode);
   debug!("Calling SCC server at URL {:?}", server_url);
 
-  let request = http_client.post(server_url)
+  let url = try!(Url::parse(&format!("{}/connect/subscriptions/systems", server_url)));
+
+  let request = http_client.post(url)
                            .header(Authorization(format!("Token token=\"{}\"", regcode)));
   let _result = try!(request.send());
 
