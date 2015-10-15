@@ -3,48 +3,50 @@ extern crate clap;
 use clap::{Arg, App, AppSettings};
 
 fn main() {
-  let http_client = Client::new();
+    let http_client = Client::new();
 
-  let matches = App::new("uconnect")
-                    .version("0.1.0")
-                    .author("Kirill Pimenov <kpimenov@suse.de>")
-                    .about("Rust reimplementation of the SUSE Connect tool.")
+    let matches = App::new("uconnect")
+                      .version("0.1.0")
+                      .author("Kirill Pimenov <kpimenov@suse.de>")
+                      .about("Rust reimplementation of the SUSE Connect tool.")
 
-                    .arg(Arg::with_name("debug")
-                             .short("d")
-                             .long("debug")
-                             .global(true)
-                             .help("Enable debugging output"))
+                      .arg(Arg::with_name("debug")
+                               .short("d")
+                               .long("debug")
+                               .global(true)
+                               .help("Enable debugging output"))
 
-                    .arg(Arg::with_name("URL")
-                             .long("url")
-                             .takes_value(true)
-                             .help("URL of registration server (e.g. https://scc.suse.com)."))
+                      .arg(Arg::with_name("URL")
+                               .long("url")
+                               .takes_value(true)
+                               .help("URL of registration server (e.g. https://scc.suse.com)."))
 
-                    .arg(Arg::with_name("REGCODE")
-                             .short("r")
-                             .long("regcode")
-                             .takes_value(true)
-                             .help("Subscription registration code for the product to be registered."))
+                      .arg(Arg::with_name("REGCODE")
+                               .short("r")
+                               .long("regcode")
+                               .takes_value(true)
+                               .help("Subscription registration code for the product to be registered."))
 
-                    .setting(AppSettings::ArgRequiredElseHelp)
+                      .setting(AppSettings::ArgRequiredElseHelp)
 
-                    .get_matches();
+                      .get_matches();
 
-  enable_logging(matches.is_present("debug"));
+    enable_logging(matches.is_present("debug"));
 
-  // Calling `unwrap()` should be safe, because regcode presence is validated by Clap setup
-  let regcode = matches.value_of("REGCODE").unwrap();
-  // TODO Properly handle hostnames without `http://` here
-  let server_url = matches.value_of("URL").unwrap_or("https://scc.suse.com");
+    // Calling `unwrap()` should be safe, because regcode presence is validated by Clap setup
+    let regcode = matches.value_of("REGCODE").unwrap();
+    // TODO Properly handle hostnames without `http://` here
+    let server_url = matches.value_of("URL").unwrap_or("https://scc.suse.com");
 
-  match announce_system(&regcode, &server_url, &http_client) {
-    Ok(()) => {},
-    Err(e) => {
-      error!("{}", e);
-      std::process::exit(67);
-    }
-  };
+    let scc_credentials = read_scc_credentials().unwrap_or_else(|_error| {
+        match announce_system(&regcode, &server_url, &http_client) {
+            Ok(credentials) => credentials,
+            Err(x) => {
+                error!("{}", x);
+                std::process::exit(67);
+            }
+        }
+    });
 }
 
 
@@ -69,9 +71,9 @@ use hyper::client::Client;
 use hyper::Url;
 use hyper::header::{Accept, Authorization, ContentType, AcceptEncoding, Encoding, qitem};
 use hyper::mime::{Mime, TopLevel, SubLevel};
-use std::io::Read; // To make `read_to_string` work
+use std::io::prelude::*; // To make `read_to_string` work
 
-fn announce_system<'a>(regcode: &str, server_url: &str, http_client: &Client) -> hyper::error::Result<()> {
+fn announce_system(regcode: &str, server_url: &str, http_client: &Client) -> hyper::error::Result<SystemCredentials> {
   debug!("Provided regcode {:?}", regcode);
   debug!("Calling SCC server at URL {:?}", server_url);
 
@@ -89,9 +91,12 @@ fn announce_system<'a>(regcode: &str, server_url: &str, http_client: &Client) ->
 
   let mut response_body = String::new();
   try!(response.read_to_string(&mut response_body));
-  write_scc_credentials(&response_body);
 
-  Ok(())
+  // TODO replace unwrap() with try!() here
+  let credentials: SystemCredentials = json::decode(&response_body).unwrap();
+  write_scc_credentials(&credentials).unwrap();
+
+  Ok(credentials.into())
 }
 
 // JSON support
@@ -134,7 +139,26 @@ struct SystemCredentials {
   password: String
 }
 
-fn write_scc_credentials(json_response: &str) {
-  let credentials: SystemCredentials = json::decode(json_response).unwrap(); // TODO Solve issue with Error inheritance and use try! here
-  debug!("{:?}", credentials);
+use std::fs;
+
+fn read_scc_credentials() -> Result<SystemCredentials, std::io::Error> {
+    let mut file = try!(fs::File::open("/etc/zypp/credentials.d/SCCcredentials"));
+
+    let mut buffer = String::new();
+    file.read_to_string(&mut buffer).unwrap();
+
+    debug!("Loaded existing SCC credentials {:?}", buffer);
+
+    let mut shards = buffer.trim().split(":");
+    Ok(SystemCredentials{ login: shards.next().unwrap().into(), password: shards.next().unwrap().into() })
+}
+
+fn write_scc_credentials(credentials: &SystemCredentials) -> Result<(), std::io::Error> {
+  debug!("Writing {:?} into SCCcredentials file", credentials);
+
+  fs::create_dir_all("/etc/zypp/credentials.d").unwrap();
+  let mut scc_credentials = try!(fs::File::create("/etc/zypp/credentials.d/SCCcredentials"));
+  try!(scc_credentials.write_fmt(format_args!("{}:{}", credentials.login, credentials.password)));
+
+  Ok(())
 }
