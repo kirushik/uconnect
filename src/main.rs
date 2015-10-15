@@ -2,15 +2,6 @@
 extern crate clap;
 use clap::{Arg, App, AppSettings};
 
-// Logging
-#[macro_use]
-extern crate log;
-extern crate flexi_logger;
-
-// HTTP client
-extern crate hyper;
-use hyper::client::Client;
-
 fn main() {
   let http_client = Client::new();
 
@@ -52,16 +43,29 @@ fn main() {
   announce_system(&regcode, &server_url, &http_client).unwrap();
 }
 
+
+// Logging
+#[macro_use]
+extern crate log;
+extern crate flexi_logger;
+
 fn enable_debug() {
   flexi_logger::init(flexi_logger::LogConfig::new(), Some("uconnect=debug".to_string())).unwrap();
 }
+
+
+// HTTP client
+extern crate hyper;
+use hyper::client::Client;
+use hyper::header::Authorization;
 
 fn announce_system<'a>(regcode: &str, server_url: &str, http_client: &Client) -> hyper::error::Result<()> {
   debug!("Provided regcode {:?}", regcode);
   debug!("Calling SCC server at URL {:?}", server_url);
 
-  let request = http_client.post(server_url);
-  try!(request.send());
+  let request = http_client.post(server_url)
+                           .header(Authorization(format!("Token token=\"{}\"", regcode)));
+  let _result = try!(request.send());
 
   Ok(())
 }
