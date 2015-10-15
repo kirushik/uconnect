@@ -15,7 +15,7 @@ pub fn announce_system(regcode: &str, server_url: &str, http_client: &Client) ->
   debug!("Calling SCC server at URL {:?}", server_url);
 
   let url = try!(Url::parse(&format!("{}/connect/subscriptions/systems", server_url)));
-  let payload = announce_system_payload();
+  let payload = AnnouncePayload::read().to_json();
 
   let request = http_client.post(url)
                            .header(Authorization(format!("Token token=\"{}\"", regcode)))
@@ -49,17 +49,21 @@ struct AnnouncePayload {
   hw_info: HwInfo
 }
 
-fn announce_system_payload() -> String {
-  let hw_info = AnnouncePayload {
-    hostname: "ignis".into(),
-    hw_info: HwInfo {
-      arch: "x86_64".into(),
-      cpus: 2,
-      sockets: 2,
-      hypervisor: None,
-      uuid: Some("67a13430-48c5-4454-b9b9-46010ac0e391".into())
+impl AnnouncePayload {
+    pub fn read() -> AnnouncePayload {
+        AnnouncePayload {
+            hostname: "ignis".into(),
+            hw_info: HwInfo {
+                arch: "x86_64".into(),
+                cpus: 2,
+                sockets: 2,
+                hypervisor: None,
+                uuid: Some("67a13430-48c5-4454-b9b9-46010ac0e391".into())
+            }
+        }
     }
-  };
-  // TODO Add a proper try! and result throwing here
-  json::encode(&hw_info).unwrap()
+
+    pub fn to_json(&self) -> String {
+        json::encode(&self).unwrap()
+    }
 }
