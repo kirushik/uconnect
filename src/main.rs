@@ -58,7 +58,8 @@ fn enable_debug() {
 extern crate hyper;
 use hyper::client::Client;
 use hyper::Url;
-use hyper::header::{Authorization, ContentType, AcceptEncoding, Encoding, qitem};
+use hyper::header::{Accept, Authorization, ContentType, AcceptEncoding, Encoding, qitem};
+use hyper::mime::{Mime, TopLevel, SubLevel};
 
 fn announce_system<'a>(regcode: &str, server_url: &str, http_client: &Client) -> hyper::error::Result<()> {
   debug!("Provided regcode {:?}", regcode);
@@ -68,6 +69,7 @@ fn announce_system<'a>(regcode: &str, server_url: &str, http_client: &Client) ->
 
   let request = http_client.post(url)
                            .header(Authorization(format!("Token token=\"{}\"", regcode)))
+                           .header(Accept(vec![qitem(Mime(TopLevel::Application, SubLevel::Ext("vnd.scc.suse.com.v4+json".into()), vec![]))]))
                            .header(ContentType::json())
                            .header(AcceptEncoding(vec![qitem(Encoding::Gzip), qitem(Encoding::Deflate)]));
   let result = try!(request.send());
