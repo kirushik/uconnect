@@ -4,4 +4,9 @@ version = "0.1.0"
 authors = ["Kirill Pimenov <kpimenov@suse.de>"]
 
 [dependencies]
+# Options parsing
 clap = "1.4"
+
+# Logging
+log = "0.3"
+flexi_logger = "0.3"
