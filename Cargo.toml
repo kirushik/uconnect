@@ -1,0 +1,4 @@
+[package]
+name = "uconnect"
+version = "0.1.0"
+authors = ["Kirill Pimenov <kpimenov@suse.de>"]
