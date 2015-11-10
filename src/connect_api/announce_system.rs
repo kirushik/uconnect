@@ -1,5 +1,4 @@
 use hyper::client::Client;
-use hyper::error::Result;
 use hyper::Url;
 use hyper::header::{Accept, Authorization, ContentType, AcceptEncoding, Encoding, qitem};
 use hyper::mime::{Mime, TopLevel, SubLevel};
@@ -12,11 +11,14 @@ use scc_credentials::SystemCredentials;
 
 use std::process::Command;
 
+use connect_api::errors::Result;
+
 pub fn announce_system(regcode: &str, server_url: &str, http_client: &Client) -> Result<SystemCredentials> {
   debug!("Provided regcode {:?}", regcode);
   debug!("Calling SCC server at URL {:?}", server_url);
 
-  let url = try!(Url::parse(&format!("{}/connect/subscriptions/systems", server_url)));
+  //let url = try!(Url::parse(&format!("{}/connect/subscriptions/systems", server_url)));
+  let url = Url::parse(&format!("{}/connect/subscriptions/systems", server_url)).unwrap();
   let payload = AnnouncePayload::read().to_json();
 
   let request = http_client.post(url)
@@ -31,8 +33,7 @@ pub fn announce_system(regcode: &str, server_url: &str, http_client: &Client) ->
   let mut response_body = String::new();
   try!(response.read_to_string(&mut response_body));
 
-  // TODO replace unwrap() with try!() here
-  let credentials: SystemCredentials = json::decode(&response_body).unwrap();
+  let credentials: SystemCredentials = try!(json::decode(&response_body));
   Ok(credentials.into())
 }
 
