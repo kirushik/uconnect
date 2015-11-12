@@ -1,5 +1,6 @@
 use std::result;
 use std::fmt;
+use std::error;
 
 use std::io;
 use rustc_serialize::json;
@@ -59,6 +60,19 @@ impl From<FromUtf8Error> for ConnectError {
 impl From<ParseIntError> for ConnectError {
   fn from(err: ParseIntError) -> ConnectError {
     ConnectError::ParseIntError(err)
+  }
+}
+
+impl error::Error for ConnectError {
+  fn description(&self) -> &str {
+    match *self {
+      ConnectError::JSONDecodeError(ref error) => error.description(),
+      ConnectError::JSONEncodeError(ref error) => error.description(),
+      ConnectError::IOError(ref error) => error.description(),
+      ConnectError::HTTPError(ref error) => error.description(),
+      ConnectError::Utf8Error(ref error) => error.description(),
+      ConnectError::ParseIntError(ref error) => error.description()
+    }
   }
 }
 
