@@ -1,6 +1,6 @@
 use std::fs::create_dir_all;
 use std::fs::File;
-use std::io::Error;
+use std::io::{Error, ErrorKind};
 use std::io::{Read, Write};
 
 #[derive(RustcDecodable, Debug)]
@@ -14,18 +14,27 @@ impl SystemCredentials {
         let mut file = try!(File::open("/etc/zypp/credentials.d/SCCcredentials"));
 
         let mut buffer = String::new();
-        file.read_to_string(&mut buffer).unwrap();
+        try!(file.read_to_string(&mut buffer));
 
         debug!("Loaded existing SCC credentials {:?}", buffer);
 
         let mut shards = buffer.trim().split(":");
-        Ok(SystemCredentials{ login: shards.next().unwrap().into(), password: shards.next().unwrap().into() })
+
+        if let Some(login) = shards.next() {
+          if let Some(password) = shards.next() {
+            Ok(SystemCredentials{login: login.into(), password: password.into()})
+          } else {
+            Err(Error::new(ErrorKind::InvalidData, "SCCcredentials parsing failed: password not found"))
+          }
+        } else {
+          Err(Error::new(ErrorKind::InvalidData, "SCCcredentials parsing failed: login not found"))
+        }
     }
 
     pub fn write(&self) -> Result<(), Error> {
         debug!("Writing {:?} into SCCcredentials file", self);
 
-        create_dir_all("/etc/zypp/credentials.d").unwrap();
+        try!(create_dir_all("/etc/zypp/credentials.d"));
         let mut scc_credentials = try!(File::create("/etc/zypp/credentials.d/SCCcredentials"));
         try!(scc_credentials.write_fmt(format_args!("{}:{}", self.login, self.password)));
 
