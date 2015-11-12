@@ -19,7 +19,7 @@ pub fn announce_system(regcode: &str, server_url: &str, http_client: &Client) ->
 
   //let url = try!(Url::parse(&format!("{}/connect/subscriptions/systems", server_url)));
   let url = Url::parse(&format!("{}/connect/subscriptions/systems", server_url)).unwrap();
-  let payload = AnnouncePayload::read().to_json();
+  let payload = try!(AnnouncePayload::read()).to_json();
 
   let request = http_client.post(url)
                            .header(Authorization(format!("Token token=\"{}\"", regcode)))
@@ -53,23 +53,38 @@ struct AnnouncePayload {
 }
 
 impl AnnouncePayload {
-    fn read() -> AnnouncePayload {
+    fn read() -> Result<AnnouncePayload> {
         let mut arch: Option<String> = None;
         let mut cpus: Option<u32> = None;
         let mut sockets: Option<u32> = None;
         let mut hypervisor: Option<String> = None;
 
-        let lscpu_data = String::from_utf8(Command::new("lscpu").output().unwrap().stdout).unwrap();
+        let lscpu_command = try!(Command::new("lscpu").output());
+        let lscpu_data = try!(String::from_utf8(lscpu_command.stdout));
         let lines = lscpu_data.split("\n");
         for line in lines {
             let mut chunks = line.trim().split_whitespace();
             match chunks.next() {
-                Some("Architecture:") => arch = Some(chunks.next().unwrap().into()),
-                Some("CPU(s):") => cpus = Some(chunks.next().unwrap().parse().unwrap()),
-                Some("Socket(s):") => sockets = Some(chunks.next().unwrap().parse().unwrap()),
+                Some("Architecture:") => {
+                  if let Some(string) = chunks.next() {
+                    arch = Some(string.into())
+                  }
+                },
+                Some("CPU(s):") => {
+                  if let Some(string) = chunks.next() {
+                    cpus = Some(try!(string.parse()))
+                  }
+                },
+                Some("Socket(s):") => {
+                  if let Some(string) = chunks.next() {
+                    sockets = Some(try!(string.parse()))
+                  }
+                },
                 Some("Hypervisor") => { // Actual title is "Hypervisor vendor:"
-                    chunks.next().unwrap(); // Ignoring "vendor:" part
-                    hypervisor = Some(chunks.next().unwrap().into());
+                  chunks.next(); // Ignoring "vendor:" part
+                  if let Some(string) = chunks.next() {
+                    hypervisor = Some(string.into())
+                  }
                 }
                 _ => {}
             }
@@ -87,7 +102,7 @@ impl AnnouncePayload {
         };
 
         debug!("Detected HwInfo: {:?}", result);
-        result
+        Ok(result)
     }
 
     fn to_json(&self) -> String {
