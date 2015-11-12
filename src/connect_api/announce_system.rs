@@ -19,7 +19,7 @@ pub fn announce_system(regcode: &str, server_url: &str, http_client: &Client) ->
 
   //let url = try!(Url::parse(&format!("{}/connect/subscriptions/systems", server_url)));
   let url = Url::parse(&format!("{}/connect/subscriptions/systems", server_url)).unwrap();
-  let payload = try!(AnnouncePayload::read()).to_json();
+  let payload = try!(try!(AnnouncePayload::read()).to_json());
 
   let request = http_client.post(url)
                            .header(Authorization(format!("Token token=\"{}\"", regcode)))
@@ -105,7 +105,7 @@ impl AnnouncePayload {
         Ok(result)
     }
 
-    fn to_json(&self) -> String {
-        json::encode(&self).unwrap()
+    fn to_json(&self) -> Result<String> {
+        Ok(try!(json::encode(&self)))
     }
 }

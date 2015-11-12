@@ -11,7 +11,8 @@ pub type Result<T> = result::Result<T, ConnectError>;
 
 #[derive(Debug)]
 pub enum ConnectError {
-  JSONError(json::DecoderError),
+  JSONDecodeError(json::DecoderError),
+  JSONEncodeError(json::EncoderError),
   IOError(io::Error),
   //URLError(url::parser::ParseError),
   HTTPError(hyper::error::Error),
@@ -21,7 +22,13 @@ pub enum ConnectError {
 
 impl From<json::DecoderError> for ConnectError {
   fn from(err: json::DecoderError) -> ConnectError {
-    ConnectError::JSONError(err)
+    ConnectError::JSONDecodeError(err)
+  }
+}
+
+impl From<json::EncoderError> for ConnectError {
+  fn from(err: json::EncoderError) -> ConnectError {
+    ConnectError::JSONEncodeError(err)
   }
 }
 
@@ -58,7 +65,8 @@ impl From<ParseIntError> for ConnectError {
 impl fmt::Display for ConnectError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match *self {
-      ConnectError::JSONError(ref error) => write!(f, "JSON Error: {}", error),
+      ConnectError::JSONDecodeError(ref error) => write!(f, "JSON Decode Error: {}", error),
+      ConnectError::JSONEncodeError(ref error) => write!(f, "JSON Encode Error: {}", error),
       ConnectError::IOError(ref error) => write!(f, "IO Error: {}", error),
       ConnectError::HTTPError(ref error) => write!(f, "HTTPError: {}", error),
       ConnectError::Utf8Error(ref error) => write!(f, "Utf8Error: {}", error),
