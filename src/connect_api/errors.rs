@@ -21,47 +21,28 @@ pub enum ConnectError {
   ParseIntError(ParseIntError)
 }
 
-impl From<json::DecoderError> for ConnectError {
-  fn from(err: json::DecoderError) -> ConnectError {
-    ConnectError::JSONDecodeError(err)
-  }
+macro_rules! error_mapping {
+  ($from:ty, $to:expr) => (
+    impl From<$from> for ConnectError {
+      fn from(err: $from) -> ConnectError {
+        $to(err)
+      }
+    }
+  );
 }
 
-impl From<json::EncoderError> for ConnectError {
-  fn from(err: json::EncoderError) -> ConnectError {
-    ConnectError::JSONEncodeError(err)
-  }
-}
+error_mapping!(json::DecoderError, ConnectError::JSONDecodeError);
+error_mapping!(json::EncoderError, ConnectError::JSONEncodeError);
+error_mapping!(io::Error, ConnectError::IOError);
+error_mapping!(hyper::error::Error, ConnectError::HTTPError);
+error_mapping!(FromUtf8Error, ConnectError::Utf8Error);
+error_mapping!(ParseIntError, ConnectError::ParseIntError);
 
 //impl From<url::parser::ParseError> for ConnectError {
   //fn from(err: url::parser::ParseError) -> ConnectError {
     //ConnectError::URLError(err)
   //}
 //}
-
-impl From<io::Error> for ConnectError {
-  fn from(err: io::Error) -> ConnectError {
-    ConnectError::IOError(err)
-  }
-}
-
-impl From<hyper::error::Error> for ConnectError {
-  fn from(err: hyper::error::Error) -> ConnectError {
-    ConnectError::HTTPError(err)
-  }
-}
-
-impl From<FromUtf8Error> for ConnectError {
-  fn from(err: FromUtf8Error) -> ConnectError {
-    ConnectError::Utf8Error(err)
-  }
-}
-
-impl From<ParseIntError> for ConnectError {
-  fn from(err: ParseIntError) -> ConnectError {
-    ConnectError::ParseIntError(err)
-  }
-}
 
 impl error::Error for ConnectError {
   fn description(&self) -> &str {
