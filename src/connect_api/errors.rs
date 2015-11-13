@@ -44,16 +44,23 @@ error_mapping!(ParseIntError, ConnectError::ParseIntError);
   //}
 //}
 
+macro_rules! map_descriptions {
+  ( $target:expr,
+    $($x:path),*
+  ) => {
+    match $target {
+      $( $x(ref error) => error.description() ),*
+    }
+  }
+}
+
 impl error::Error for ConnectError {
   fn description(&self) -> &str {
-    match *self {
-      ConnectError::JSONDecodeError(ref error) => error.description(),
-      ConnectError::JSONEncodeError(ref error) => error.description(),
-      ConnectError::IOError(ref error) => error.description(),
-      ConnectError::HTTPError(ref error) => error.description(),
-      ConnectError::Utf8Error(ref error) => error.description(),
-      ConnectError::ParseIntError(ref error) => error.description()
-    }
+    map_descriptions!(
+      *self,
+      ConnectError::JSONDecodeError, ConnectError::JSONEncodeError, ConnectError::IOError,
+      ConnectError::HTTPError, ConnectError::Utf8Error, ConnectError::ParseIntError
+    )
   }
 }
 
