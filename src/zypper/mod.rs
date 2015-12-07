@@ -22,7 +22,7 @@ fn installed_products() -> Vec<Product> {
 
 #[derive(Debug, Clone)]
 pub struct Product {
-    pub name: String,
+    pub identifier: String,
     pub version: String,
     pub arch: String,
     pub is_base: bool,
@@ -46,7 +46,7 @@ fn parse_products(xml: &str) -> Vec<Product> {
 }
 
 fn extract_product(attributes: &[OwnedAttribute]) -> Product {
-    let mut name = "unknown";
+    let mut identifier = "unknown";
     let mut version = "unknown";
     let mut arch = "unknown";
     let mut is_base = false;
@@ -54,7 +54,7 @@ fn extract_product(attributes: &[OwnedAttribute]) -> Product {
 
     for attr in attributes {
         match attr.name.local_name.as_ref() {
-            "name" => name = attr.value.as_ref(),
+            "name" => identifier = attr.value.as_ref(),
             "version" => version = attr.value.as_ref(),
             "arch" => arch = attr.value.as_ref(),
             "isbase" => is_base = (attr.value == "true"),
@@ -62,7 +62,7 @@ fn extract_product(attributes: &[OwnedAttribute]) -> Product {
             _ => {}
         }
     }
-    Product{name: name.into(), version: version.into(), arch: arch.into(), is_base: is_base, installed: installed}
+    Product{identifier: identifier.into(), version: version.into(), arch: arch.into(), is_base: is_base, installed: installed}
 }
 
 fn call(arguments: &str) -> String {

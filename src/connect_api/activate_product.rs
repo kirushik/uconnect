@@ -8,7 +8,7 @@ use hyper::mime::{Mime, TopLevel, SubLevel};
 
 use zypper::Product;
 
-pub fn activate_product(product: &Product, credentials: &SystemCredentials, regcode: &str, server_url: &str, http_client: &Client) -> Result<()> {
+pub fn activate_product(product: Product, credentials: &SystemCredentials, regcode: &str, server_url: &str, http_client: &Client) -> Result<()> {
   debug!("Calling activate_product for {:?}", product);
 
   let url = Url::parse(&format!("{}/connect/systems/products", server_url)).unwrap();
@@ -30,11 +30,21 @@ pub fn activate_product(product: &Product, credentials: &SystemCredentials, regc
 }
 
 #[derive(RustcEncodable, Debug)]
-struct ActivateProductPayload;
+struct ActivateProductPayload {
+  identifier: String,
+  version: String,
+  arch: String,
+  token: String
+}
 
 impl ActivateProductPayload {
-  fn prepare(product: &Product, regcode: &str) -> ActivateProductPayload {
-    ActivateProductPayload
+  fn prepare(product: Product, regcode: &str) -> ActivateProductPayload {
+    ActivateProductPayload{
+      identifier: product.identifier.into(),
+      version: product.version.into(),
+      arch: product.arch.into(),
+      token: regcode.into()
+    }
   }
 
   fn to_json(&self) -> String {
