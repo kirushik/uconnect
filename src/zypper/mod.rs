@@ -55,7 +55,7 @@ fn extract_product(attributes: &[OwnedAttribute]) -> Product {
     let mut arch = "unknown";
 
     for attr in attributes {
-        match attr.name.local_name {
+        match attr.name.local_name.as_ref() {
             "name" => name = attr.value.as_ref(),
             "version" => version = attr.value.as_ref(),
             "arch" => arch = attr.value.as_ref(),
@@ -69,7 +69,6 @@ fn call(arguments: &str) -> String {
     use std::process::Command;
     let arguments : Vec<&str> = arguments.split_whitespace().collect();
 
-    // TODO proper error handling here
     let output = Command::new("zypper").args(&arguments).output().unwrap();
     String::from_utf8(output.stdout).unwrap()
 }
