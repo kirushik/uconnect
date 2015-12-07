@@ -6,7 +6,12 @@ use hyper::Url;
 use hyper::header::{Accept, Authorization, Basic, ContentType, AcceptEncoding, Encoding, qitem};
 use hyper::mime::{Mime, TopLevel, SubLevel};
 
-use zypper::Product;
+use std::io::Read; // to make `read_to_string` work
+
+use rustc_serialize::json;
+
+use zypper;
+use zypper::{Product, Service};
 
 pub fn activate_product(product: Product, credentials: &SystemCredentials, regcode: &str, server_url: &str, http_client: &Client) -> Result<()> {
   debug!("Calling activate_product for {:?}", product);
@@ -25,6 +30,13 @@ pub fn activate_product(product: Product, credentials: &SystemCredentials, regco
                            .body(&payload);
   let mut response = try!(request.send());
   debug!("HTTP response status is {:?}", response.status);
+
+  let mut response_body = String::new();
+  response.read_to_string(&mut response_body).unwrap();
+  let service: Service = json::decode(&response_body).unwrap();
+  debug!("Service info is {:?}", service);
+
+  zypper::add_service(&service).unwrap();
 
   Ok(())
 }

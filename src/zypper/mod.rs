@@ -15,9 +15,22 @@ pub fn base_product() -> Result<Product, &'static str> {
     Err("base product not found")
 }
 
-fn installed_products() -> Vec<Product> {
+pub fn installed_products() -> Vec<Product> {
     let xml_output = call("--no-refresh --xmlout --non-interactive products -i");
     parse_products(&xml_output)
+}
+
+pub fn add_service(service: &Service) -> Result<(), &'static str> {
+    remove_service(service);
+    call(&format!("--non-interactive addservice -t ris {} '{}'", service.url, service.name));
+
+    Ok(())
+}
+
+pub fn remove_service(service: &Service) -> Result<(), &'static str> {
+    call(&format!("--non-interactive removeservice '{}'", service.name));
+
+    Ok(())
 }
 
 #[derive(Debug, Clone)]
@@ -27,6 +40,12 @@ pub struct Product {
     pub arch: String,
     pub is_base: bool,
     pub installed: bool
+}
+
+#[derive(RustcDecodable, Debug)]
+pub struct Service {
+    pub name: String,
+    pub url: String
 }
 
 fn parse_products(xml: &str) -> Vec<Product> {
@@ -69,6 +88,9 @@ fn call(arguments: &str) -> String {
     use std::process::Command;
     let arguments : Vec<&str> = arguments.split_whitespace().collect();
 
+    debug!("Calling zypper with arguments {:?}", arguments);
     let output = Command::new("zypper").args(&arguments).output().unwrap();
+    debug!("Zypper exited with status {:?}", output.status);
+
     String::from_utf8(output.stdout).unwrap()
 }
