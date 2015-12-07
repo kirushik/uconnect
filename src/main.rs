@@ -13,9 +13,13 @@ extern crate hyper;
 // JSON support
 extern crate rustc_serialize;
 
+// XML support
+extern crate xml;
+
 mod logging;
 mod connect_api;
 mod scc_credentials;
+mod zypper;
 
 fn main() {
     let http_client = hyper::client::Client::new();
@@ -53,7 +57,7 @@ fn main() {
     // TODO Properly handle hostnames without `http://` here
     let server_url = matches.value_of("URL").unwrap_or("https://scc.suse.com");
 
-    let _scc_credentials = scc_credentials::SystemCredentials::read().unwrap_or_else(|_error| {
+    let scc_credentials = scc_credentials::SystemCredentials::read().unwrap_or_else(|_error| {
         match connect_api::announce_system::announce_system(&regcode, &server_url, &http_client) {
             Ok(credentials) => { credentials.write().unwrap(); credentials },
             Err(x) => {
@@ -62,4 +66,8 @@ fn main() {
             }
         }
     });
+
+    // TODO implement handling of `--product` option here
+    let product = zypper::base_product().unwrap();
+    connect_api::activate_product::activate_product(&product, &scc_credentials, &server_url, &http_client).unwrap();
 }

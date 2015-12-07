@@ -16,3 +16,6 @@ hyper = "0.6"
 
 # JSON support
 rustc-serialize = "0.3"
+
+# XML support (for zypper)
+xml-rs = "0.2"
