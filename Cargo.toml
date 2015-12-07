@@ -15,9 +15,7 @@ flexi_logger = "0.3"
 hyper = "0.6"
 
 # JSON support
-# TODO use serde here to minimize imports
 rustc-serialize = "0.3"
 
 # XML support (for zypper)
-serde = "*"
-serde_xml = "*"
+xml-rs = "0.2"

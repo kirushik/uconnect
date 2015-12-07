@@ -14,8 +14,7 @@ extern crate hyper;
 extern crate rustc_serialize;
 
 // XML support
-extern crate serde;
-extern crate serde_xml;
+extern crate xml;
 
 mod logging;
 mod connect_api;
