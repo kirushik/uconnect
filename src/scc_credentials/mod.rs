@@ -5,8 +5,8 @@ use std::io::{Read, Write};
 
 #[derive(RustcDecodable, Debug)]
 pub struct SystemCredentials {
-  login: String,
-  password: String
+  pub login: String,
+  pub password: String
 }
 
 impl SystemCredentials {
