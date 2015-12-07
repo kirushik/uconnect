@@ -3,9 +3,10 @@ use scc_credentials::SystemCredentials;
 use std::result::Result;
 
 use hyper::client::Client;
-use hyper::Url;
 
-pub fn activate_product(product: &str, credentials: &SystemCredentials, server_url: &str, http_client: &Client) -> Result<(), &'static str> {
+use zypper::Product;
+
+pub fn activate_product(product: &Product, credentials: &SystemCredentials, server_url: &str, http_client: &Client) -> Result<(), &'static str> {
   debug!("Calling activate_product for {:?}", product);
   Err("Not yet implemented")
 }
