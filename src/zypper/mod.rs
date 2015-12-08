@@ -22,12 +22,12 @@ pub fn installed_products() -> Vec<Product> {
     parse_products(&xml_output)
 }
 
-pub fn add_service(service: &Service) -> Result<(), &'static str> {
+pub fn add_service(service: &Service, credentials: &SystemCredentials) -> Result<(), &'static str> {
     try!(remove_service(service));
     call(&format!("--non-interactive addservice -t ris {} {}", service.url, service.name)); // adding the service record
     call(&format!("--non-interactive modifyservice -r {}", service.name)); // enabling service autorefresh
 
-    SystemCredentials::read().unwrap().write_for_service(&service.name).unwrap();
+    credentials.write_for_service(&service.name).unwrap();
 
     Ok(())
 }

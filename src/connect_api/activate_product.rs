@@ -36,7 +36,7 @@ pub fn activate_product(product: Product, credentials: &SystemCredentials, regco
   let service: Service = json::decode(&response_body).unwrap();
   debug!("Service info is {:?}", service);
 
-  zypper::add_service(&service).unwrap();
+  zypper::add_service(&service, credentials).unwrap();
 
   Ok(())
 }
