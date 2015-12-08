@@ -81,8 +81,8 @@ fn extract_product(attributes: &[OwnedAttribute]) -> Product {
             "name" => identifier = attr.value.as_ref(),
             "version" => version = attr.value.as_ref(),
             "arch" => arch = attr.value.as_ref(),
-            "isbase" => is_base = (attr.value == "true"),
-            "installed" => installed = (attr.value == "true"),
+            "isbase" => is_base = attr.value=="true",
+            "installed" => installed = attr.value=="true",
             _ => {}
         }
     }
