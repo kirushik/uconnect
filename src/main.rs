@@ -46,6 +46,12 @@ fn main() {
                                .takes_value(true)
                                .help("Subscription registration code for the product to be registered."))
 
+                      .arg(Arg::with_name("PRODUCT")
+                           .short("p")
+                           .long("product")
+                           .takes_value(true)
+                           .help("Activate PRODUCT. Defaults to the base SUSE Linux Enterprise product on this system."))
+
                       .setting(AppSettings::ArgRequiredElseHelp)
 
                       .get_matches();
@@ -67,7 +73,17 @@ fn main() {
         }
     });
 
-    // TODO implement handling of `--product` option here
-    let product = zypper::base_product().unwrap();
+    fn parse_product(product_line: &str) -> zypper::Product {
+        let mut shards = product_line.split("/");
+        zypper::Product{
+            identifier: shards.next().unwrap().into(),
+            version:    shards.next().unwrap().into(),
+            arch:       shards.next().unwrap().into(),
+            is_base:    false,
+            installed:  false
+        }
+    }
+
+    let product = matches.value_of("PRODUCT").map(parse_product).unwrap_or_else(|| zypper::base_product().unwrap());
     connect_api::activate_product::activate_product(product, &scc_credentials, &regcode, &server_url, &http_client).unwrap();
 }
