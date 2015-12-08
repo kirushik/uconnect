@@ -4,6 +4,8 @@ extern crate xml;
 use xml::reader::{EventReader, XmlEvent};
 use xml::attribute::OwnedAttribute;
 
+use scc_credentials::SystemCredentials;
+
 pub fn base_product() -> Result<Product, &'static str> {
     let products = installed_products();
     debug!("Zypper listed the following products: {:?}", products);
@@ -22,13 +24,16 @@ pub fn installed_products() -> Vec<Product> {
 
 pub fn add_service(service: &Service) -> Result<(), &'static str> {
     remove_service(service);
-    call(&format!("--non-interactive addservice -t ris {} '{}'", service.url, service.name));
+    call(&format!("--non-interactive addservice -t ris {} {}", service.url, service.name)); // adding the service record
+    call(&format!("--non-interactive modifyservice -r {}", service.name)); // enabling service autorefresh
+
+    SystemCredentials::read().unwrap().write_for_service(&service.name);
 
     Ok(())
 }
 
 pub fn remove_service(service: &Service) -> Result<(), &'static str> {
-    call(&format!("--non-interactive removeservice '{}'", service.name));
+    call(&format!("--non-interactive removeservice {}", service.name));
 
     Ok(())
 }
