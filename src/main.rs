@@ -30,7 +30,6 @@ fn main() {
                       .about("Rust reimplementation of the SUSE Connect tool.")
 
                       .arg(Arg::with_name("debug")
-                               .short("d")
                                .long("debug")
                                .global(true)
                                .help("Enable debugging output"))
