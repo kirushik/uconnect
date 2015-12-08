@@ -22,6 +22,10 @@ pub fn installed_products() -> Vec<Product> {
     parse_products(&xml_output)
 }
 
+pub fn product_statuses() -> Vec<ProductStatus> {
+    installed_products().into_iter().map(|product| product.into()).collect()
+}
+
 pub fn add_service(service: &Service, credentials: &SystemCredentials) -> Result<(), &'static str> {
     try!(remove_service(service));
     call(&format!("--non-interactive addservice -t ris {} {}", service.url, service.name)); // adding the service record
@@ -46,6 +50,29 @@ pub struct Product {
     pub is_base: bool,
     pub installed: bool
 }
+
+impl Into<ProductStatus> for Product {
+    fn into(self) -> ProductStatus {
+        let status = if self.installed { InstallationStatus::Installed } else { InstallationStatus::NotInstalled };
+        ProductStatus{
+            product: self,
+            status: status
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum InstallationStatus {
+    Installed,
+    NotInstalled
+}
+
+#[derive(Debug, Clone)]
+pub struct ProductStatus {
+    pub product: Product,
+    pub status: InstallationStatus
+}
+
 
 #[derive(RustcDecodable, Debug)]
 pub struct Service {
