@@ -31,7 +31,6 @@ fn main() {
 
                       .arg(Arg::with_name("debug")
                                .long("debug")
-                               .global(true)
                                .help("Enable debugging output"))
 
                       .arg(Arg::with_name("URL")
