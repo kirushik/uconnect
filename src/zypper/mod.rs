@@ -22,12 +22,12 @@ pub fn installed_products() -> Vec<Product> {
     parse_products(&xml_output)
 }
 
-pub fn add_service(service: &Service) -> Result<(), &'static str> {
-    remove_service(service);
+pub fn add_service(service: &Service, credentials: &SystemCredentials) -> Result<(), &'static str> {
+    try!(remove_service(service));
     call(&format!("--non-interactive addservice -t ris {} {}", service.url, service.name)); // adding the service record
     call(&format!("--non-interactive modifyservice -r {}", service.name)); // enabling service autorefresh
 
-    SystemCredentials::read().unwrap().write_for_service(&service.name);
+    credentials.write_for_service(&service.name).unwrap();
 
     Ok(())
 }
@@ -81,8 +81,8 @@ fn extract_product(attributes: &[OwnedAttribute]) -> Product {
             "name" => identifier = attr.value.as_ref(),
             "version" => version = attr.value.as_ref(),
             "arch" => arch = attr.value.as_ref(),
-            "isbase" => is_base = (attr.value == "true"),
-            "installed" => installed = (attr.value == "true"),
+            "isbase" => is_base = attr.value=="true",
+            "installed" => installed = attr.value=="true",
             _ => {}
         }
     }
