@@ -5,8 +5,8 @@ use std::io::{Read, Write};
 
 #[derive(RustcDecodable, Debug)]
 pub struct SystemCredentials {
-  login: String,
-  password: String
+  pub login: String,
+  pub password: String
 }
 
 impl SystemCredentials {
@@ -37,6 +37,16 @@ impl SystemCredentials {
         try!(create_dir_all("/etc/zypp/credentials.d"));
         let mut scc_credentials = try!(File::create("/etc/zypp/credentials.d/SCCcredentials"));
         try!(scc_credentials.write_fmt(format_args!("{}:{}", self.login, self.password)));
+
+        Ok(())
+    }
+
+    pub fn write_for_service(&self, service_name: &str) -> Result<(), Error> {
+        debug!("Writing {:?} into {} credentials file", self, service_name);
+
+        try!(create_dir_all("/etc/zypp/credentials.d"));
+        let mut scc_credentials = try!(File::create(format!("/etc/zypp/credentials.d/{}", service_name)));
+        try!(scc_credentials.write_fmt(format_args!("username={}\npassword={}", self.login, self.password)));
 
         Ok(())
     }

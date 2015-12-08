@@ -69,5 +69,5 @@ fn main() {
 
     // TODO implement handling of `--product` option here
     let product = zypper::base_product().unwrap();
-    connect_api::activate_product::activate_product(&product, &scc_credentials, &server_url, &http_client).unwrap();
+    connect_api::activate_product::activate_product(product, &scc_credentials, &regcode, &server_url, &http_client).unwrap();
 }
